@@ -34,7 +34,7 @@ let spawnInterval = 60;
 let difficulty = 1;
 
 // プレイヤー操作
-canvas.addEventListener('pointermove', e => {
+document.children[0].addEventListener('pointermove', e => {
   if (e.pointerType !== "mouse") return;
   const rect = canvas.getBoundingClientRect();
   let x = e.clientX - rect.left;
