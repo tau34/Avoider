@@ -269,14 +269,19 @@ restartBtn.addEventListener('click', () => {
 // メインループ
 function loop() {
   if (!player.alive) {
+    let hs = localStorage.getItem("highscore") || 0;
+    if (hs < time) {
+      localStorage.setItem("highscore", hs = time);
+    }
     ctx.fillStyle = "rgba(0,0,0,0.7)";
     ctx.fillRect(0,0,FIELD_W,FIELD_H);
     ctx.fillStyle = "#fff";
     ctx.font = "36px cursive";
     ctx.textAlign = "center";
-    ctx.fillText("Game Over", FIELD_W/2, FIELD_H/2);
+    ctx.fillText("Game Over", FIELD_W/2, FIELD_H/2 - 40);
     ctx.font = "20px cursive";
-    ctx.fillText(`生存時間: ${(time/60).toFixed(1)}秒`, FIELD_W/2, FIELD_H/2+40);
+    ctx.fillText(`生存時間: ${(time/60).toFixed(1)}秒`, FIELD_W/2, FIELD_H/2);
+    ctx.fillText(`ハイスコア: ${(hs/60).toFixed(1)}秒`, FIELD_W/2, FIELD_H/2+40);
     restartBtn.style.display = "block";
     return;
   }
