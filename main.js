@@ -358,6 +358,107 @@ function updateDifficulty() {
 }
 
 const restartBtn = document.getElementById('restartBtn');
+const rankingBtn = document.getElementById('rankingBtn');
+const rankingPanel = document.getElementById('rankingPanel');
+const rankingList = document.getElementById('rankingList');
+const rankingCloseBtn = document.getElementById('rankingCloseBtn');
+const scoreEntry = document.getElementById('scoreEntry');
+const playerNameInput = document.getElementById('playerName');
+const SCORE_KEY = "scores";
+const FIXED_TIMESTEP = 1000 / 60;
+let previousTime = 0;
+let accumulator = 0;
+
+function getScores() {
+  const storedScores = localStorage.getItem(SCORE_KEY);
+  if (!storedScores) return [];
+
+  try {
+    const scores = JSON.parse(storedScores);
+    if (!Array.isArray(scores)) return [];
+    return scores
+      .filter(score => typeof score?.name === "string" && Number.isFinite(score?.score))
+      .map(score => ({ name: score.name, score: score.score }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  } catch (error) {
+    console.error("スコアの読み込みに失敗しました。", error);
+    return [];
+  }
+}
+
+function saveScore(name, score) {
+  const scores = [...getScores(), { name, score }]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+  localStorage.setItem(SCORE_KEY, JSON.stringify(scores));
+  return scores;
+}
+
+function showRanking() {
+  rankingList.replaceChildren();
+  const scores = getScores();
+  scores.forEach(score => {
+    const item = document.createElement("li");
+    item.textContent = `${score.name}  ${(score.score / 60).toFixed(1)}秒`;
+    rankingList.appendChild(item);
+  });
+  if (scores.length === 0) {
+    const item = document.createElement("li");
+    item.textContent = "まだスコアがありません";
+    rankingList.appendChild(item);
+  }
+  rankingPanel.style.display = "block";
+}
+
+function hideRanking() {
+  rankingPanel.style.display = "none";
+}
+
+rankingBtn.addEventListener('click', showRanking);
+rankingCloseBtn.addEventListener('click', hideRanking);
+
+function showGameOver(allowScoreEntry = true) {
+  const scores = getScores();
+  const qualifies = allowScoreEntry && (scores.length < 5 || time > scores[scores.length - 1].score);
+
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(0, 0, FIELD_W, FIELD_H);
+  ctx.fillStyle = "#fff";
+  ctx.font = "36px cursive";
+  ctx.textAlign = "center";
+  ctx.fillText("Game Over", FIELD_W / 2, FIELD_H / 2 - 100);
+  ctx.font = "20px cursive";
+  ctx.fillText(`生存時間: ${(time / 60).toFixed(1)}秒`, FIELD_W / 2, FIELD_H / 2 - 60);
+
+  if (qualifies) {
+    const rank = scores.filter(score => time < score.score).length + 1;
+    ctx.fillText(`あなたのスコアは${rank}位でした！名前を入力してください`, FIELD_W / 2, FIELD_H / 2 - 20);
+    scoreEntry.style.display = "block";
+    scoreEntry.value = "名無し";
+    playerNameInput.focus();
+  }
+
+  restartBtn.style.display = qualifies ? "none" : "block";
+  rankingBtn.style.display = qualifies ? "none" : "block";
+  scoreEntry.style.display = qualifies ? "block" : "none";
+  if (qualifies) {
+    playerNameInput.value = "";
+    playerNameInput.focus();
+  }
+}
+
+scoreEntry.addEventListener('submit', event => {
+  event.preventDefault();
+  const name = playerNameInput.value.trim();
+  if (!name) return;
+
+  saveScore(name, time);
+  scoreEntry.style.display = "none";
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(0, 0, FIELD_W, FIELD_H);
+  showGameOver(false);
+});
 
 restartBtn.addEventListener('click', () => {
   // 初期化
@@ -366,28 +467,39 @@ restartBtn.addEventListener('click', () => {
   time = 0;
   difficulty = 1;
   restartBtn.style.display = "none";
-  loop();
+  rankingBtn.style.display = "none";
+  hideRanking();
+  scoreEntry.style.display = "none";
+  previousTime = 0;
+  accumulator = 0;
+  requestAnimationFrame(loop);
 });
 // メインループ
-function loop() {
+let lastTime = performance.now();
+function loop(currentTime) {
+  if (previousTime === 0) previousTime = currentTime;
+  accumulator += Math.min(currentTime - previousTime, 250);
+  previousTime = currentTime;
+
+  lastTime = currentTime;
+
   if (!player.alive) {
-    let hs = localStorage.getItem("highscore") || 0;
-    if (hs < time) {
-      localStorage.setItem("highscore", hs = time);
-    }
-    ctx.fillStyle = "rgba(0,0,0,0.7)";
-    ctx.fillRect(0, 0, FIELD_W, FIELD_H);
-    ctx.fillStyle = "#fff";
-    ctx.font = "36px cursive";
-    ctx.textAlign = "center";
-    ctx.fillText("Game Over", FIELD_W / 2, FIELD_H / 2 - 40);
-    ctx.font = "20px cursive";
-    ctx.fillText(`生存時間: ${(time / 60).toFixed(1)}秒`, FIELD_W / 2, FIELD_H / 2);
-    ctx.fillText(`ハイスコア: ${(hs / 60).toFixed(1)}秒`, FIELD_W / 2, FIELD_H / 2 + 40);
-    restartBtn.style.display = "block";
+    showGameOver();
     return;
   }
   restartBtn.style.display = "none";
+  rankingBtn.style.display = "none";
+  while (accumulator >= FIXED_TIMESTEP) {
+    for (let i = 0; i < 5; i++) {
+      updateBullets();
+      checkCollision();
+    }
+    updateDifficulty();
+    // 弾生成
+    if (time % spawnInterval === 0) spawnBullet();
+    accumulator -= FIXED_TIMESTEP;
+  }
+
   ctx.clearRect(0, 0, FIELD_W, FIELD_H);
   //背景
   drawBackground();
@@ -420,14 +532,7 @@ function loop() {
   ctx.shadowBlur = 0;
   drawPlayer();
   drawBullets();
-  for (let i = 0; i < 5; i++) {
-    updateBullets();
-    checkCollision();
-  }
-  updateDifficulty();
-  // 弾生成
-  if (time % spawnInterval === 0) spawnBullet();
   requestAnimationFrame(loop);
 }
 
-loop();
+requestAnimationFrame(loop);

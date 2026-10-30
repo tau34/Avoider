@@ -16,18 +16,83 @@ canvas {
   transform: translate(-50%, -50%);
   background: #080d18;
 }
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  background: #fff;
+}
 #info {
   color: #fff;
   text-align: center;
   font-family: sans-serif;
 }
-#restartBtn {
+#rankingBtn {
   display: none;
   position: absolute;
   left: 50%;
-  top: 500px;
+  top: calc(50% - 10px);
   transform: translate(-50%, -50%);
   font-size: 20px;
   padding: 10px 30px;
   font-family: cursive;
+}
+#restartBtn {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 60px);
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  padding: 10px 30px;
+  font-family: cursive;
+}
+#scoreEntry {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 20px);
+  transform: translate(-50%, -50%);
+  color: #fff;
+  text-align: center;
+  font-family: sans-serif;
+}
+#scoreEntry label,
+#scoreEntry input,
+#scoreEntry button {
+  font-size: 16px;
+}
+#scoreEntry input {
+  width: 140px;
+  margin: 0 8px;
+  padding: 5px;
+}
+#scoreEntry button {
+  padding: 5px 12px;
+}
+#rankingPanel {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 280px;
+  padding: 20px 30px;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  background: rgba(8, 13, 24, 0.95);
+  border: 1px solid #fff;
+  border-radius: 8px;
+  text-align: center;
+  font-family: sans-serif;
+}
+#rankingPanel h2 {
+  margin: 0 0 15px;
+}
+#rankingList {
+  margin: 0 0 18px;
+  padding-left: 30px;
+  text-align: left;
+}
+#rankingList li {
+  padding: 3px 0;
 }

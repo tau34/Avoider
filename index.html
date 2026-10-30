@@ -7,7 +7,18 @@
   </head>
   <body>
       <canvas id="game" width="1120" height="630"></canvas>
-    <button id="restartBtn">Retry</button>
+      <form id="scoreEntry">
+        <label for="playerName">名前を入力</label>
+        <input id="playerName" type="text" maxlength="12" autocomplete="off" required />
+        <button type="submit">登録</button>
+      </form>
+      <button id="rankingBtn">ランキング</button>
+      <button id="restartBtn">もう一度</button>
+      <section id="rankingPanel" aria-labelledby="rankingTitle">
+        <h2 id="rankingTitle">ランキング</h2>
+        <ol id="rankingList"></ol>
+        <button id="rankingCloseBtn" type="button">閉じる</button>
+      </section>
     <script src="main.js"></script>
   </body>
 </html>
